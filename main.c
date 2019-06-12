@@ -10,7 +10,8 @@
 int main() {
 
     int exitStatus;
-    pid_t childPID = fork(); 
+    // Create a child process, capture the child process ID
+    pid_t childPID = fork();
 
     if(childPID < 0) {
         perror("System call <fork()> failed\n");
@@ -18,6 +19,7 @@ int main() {
     }
 
     else if(childPID == 0) {
+        // Execute counter.c, capture program status
         exitStatus = execl("./counter", "counter", "5", NULL);
     }
 
