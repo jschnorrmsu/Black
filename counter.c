@@ -10,6 +10,10 @@ int main(int argc, char*argv[]) {
     int childPID = getpid();
     int parentPID = getppid();
     long int countToThis = strtol(argv[1], &endPointer, 10);
+
+    // Parent/Child PID should always return > 0 
+    assert(parentPID > 0);
+    assert(childPID > 0);
     assert(printf("Child PID: %d \nParent PID: %d\n", childPID, parentPID) != 0);
 
     if(argc <= 1) {
