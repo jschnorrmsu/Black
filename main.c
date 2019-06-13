@@ -26,9 +26,10 @@ int main() {
     }
 
     else {
-        // Wait for child process to end, print exit status returned from counter.c upon sucess.
+        // Wait for child process to end, print exit status returned from counter.c upon success.
         assert(waitpid(childPID, &exitStatus, 0) != -1);
-        if(WIFEXITED(exitStatus)) {
+
+        if(WIFEXITED(exitStatus) > 0) {
             assert(printf("Process exited with status: %d \n", WEXITSTATUS(exitStatus)) != 0);
         }
 
