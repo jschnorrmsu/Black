@@ -30,7 +30,7 @@ int main() {
         assert(waitpid(childPID, &exitStatus, 0) != -1);
 
         if(WIFEXITED(exitStatus) > 0) {
-            assert(printf("Process exited with status: %d \n", WEXITSTATUS(exitStatus)) != 0);
+            assert(printf("Process %d with status: %d \n", childPID, WEXITSTATUS(exitStatus)) != 0);
         }
 
     }
