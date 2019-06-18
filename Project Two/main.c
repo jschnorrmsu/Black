@@ -2,31 +2,33 @@
 #include <assert.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <error.h>
+#include <stdio.h>
 
-
-/*
-struct sigaction action;
-action.sa_handler = handler;
-sigemptyset (&action.sa_mask);
-action.sa_flags = SA_RESTART;
-assert (sigaction (SIGUSR1, &action, NULL) == 0 ); 
-*/
-
-void handler(int) {
+void SIGUSR1Handler(int signal) {
     
-    sigaction();
-
+    //sigaction();
+    printf("test output from SIGUSR1Hanlder\n");
     //then wait for the child
     //waitpid();
     //and then when signals arrive, the signal handler begins doing its thing. 
     
 }
 
+void SIGUSR2Handler(int signal) {
+
+    printf("test output from SIGUSR2Handler\n");
+
+}
+
 int main() {
 
+    printf("test output form main.c\n");
+    int exitStatus;
+    pid_t parentPID;
     // Create a child process, capture child PID# upon success. 
     pid_t childPID = fork();
-    int exitStatus;
 
     if( childPID < 0) {
         perror("System call fork() failed\n");
@@ -34,13 +36,16 @@ int main() {
     }
 
     else if( childPID == 0 ) {
+
+        parentPID = getppid();
         // Execute child.c, capture program return status. 
-        exitStatus = execl("./child", "child", NULL);
-        perror("Function execl() failed\n");
-        exit(exitStatus);
+        //exitStatus = execl("./child", "child", NULL);
+        //perror("Function execl() failed\n");
+        //exit(exitStatus);
     }
 
     else {
+
         assert(waitpid(childPID, &exitStatus, 0) != -1);
     }
     
