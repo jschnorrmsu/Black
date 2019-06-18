@@ -12,6 +12,7 @@
 
 int main() {
     int returnValue;
+    int parentPID = getppid();
 
 /*
     struct sigaction action;
