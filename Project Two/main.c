@@ -3,12 +3,28 @@
 #include <signal.h>
 #include <sys/types.h>
 
-static void handler() {
+
+/*
+struct sigaction action;
+action.sa_handler = handler;
+sigemptyset (&action.sa_mask);
+action.sa_flags = SA_RESTART;
+assert (sigaction (SIGUSR1, &action, NULL) == 0 ); 
+*/
+
+void handler(int) {
+    
+    sigaction();
+
+    //then wait for the child
+    //waitpid();
+    //and then when signals arrive, the signal handler begins doing its thing. 
     
 }
 
 int main() {
 
+    // Create a child process, capture child PID# upon success. 
     pid_t childPID = fork();
     int exitStatus;
 
@@ -18,6 +34,7 @@ int main() {
     }
 
     else if( childPID == 0 ) {
+        // Execute child.c, capture program return status. 
         exitStatus = execl("./child", "child", NULL);
         perror("Function execl() failed\n");
         exit(exitStatus);
@@ -26,12 +43,6 @@ int main() {
     else {
         assert(waitpid(childPID, &exitStatus, 0) != -1);
     }
-
-    struct sigaction action;
-    action.sa_handler = handler;
-    sigemptyset (&action.sa_mask);
-    action.sa_flags = SA_RESTART;
-    assert (sigaction (SIGUSR1, &action, NULL) == 0 );
     
     return 0;
 
