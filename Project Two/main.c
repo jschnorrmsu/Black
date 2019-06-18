@@ -1,20 +1,30 @@
+#include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <error.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 void SIGUSR1Handler();
 void SIGUSR2Handler();
 
 int main() {
 
-    printf("test output form main.c\n");
     int exitStatus;
     pid_t parentPID;
+
+    // Set handlers for SIGUSR1 and SIGUSR2 signals.
+    signal (SIGUSR1, SIGUSR1Handler);
+    signal (SIGUSR2, SIGUSR2Handler);
+
+    struct sigaction action;
+    action.sa_handler = SIGUSR1Handler;
+    sigemptyset (&action.sa_mask);
+    action.sa_flags = 0;
+    //action.sa_flags = SA_RESTART;
+
+    assert (sigaction (SIGUSR1, &action, NULL) == 0 );
+
     // Create a child process, capture child PID# upon success. 
     pid_t childPID = fork();
 
@@ -38,7 +48,6 @@ int main() {
     }
     
     return 0;
-
 } 
 
 void SIGUSR1Handler(int signal) {
@@ -47,12 +56,10 @@ void SIGUSR1Handler(int signal) {
     printf("test output from SIGUSR1Hanlder\n");
     //then wait for the child
     //waitpid();
-    //and then when signals arrive, the signal handler begins doing its thing. 
-    
+    //and then when signals arrive, the signal handler begins doing its thing.   
 }
 
 void SIGUSR2Handler(int signal) {
 
     printf("test output from SIGUSR2Handler\n");
-
 }
