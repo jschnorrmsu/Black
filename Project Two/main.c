@@ -20,6 +20,7 @@ int main() {
 
     assert (sigaction (SIGUSR1, &action, NULL) == 0 );
     assert (sigaction (SIGUSR2, &action, NULL) == 0 );
+    assert (sigaction (SIGINT, &action, NULL) == 0);
 
     pid_t childPID = fork();
 
@@ -41,15 +42,18 @@ int main() {
     return 0;
 } 
 
-void handler(int signum) {
-    printf("test output on top of handler");  
+void handler(int signum) { 
+
+    if(signum == 2) {
+        assert(printf("Output from signal# %d, SIGINT\n", signum) != 0);
+    } 
 
     if(signum == 10) {
-        printf("Output from SIGUSR1 handler");
+        assert(printf("Output from signal# %d, SIGUSR1\n", signum) != 0);
     }
 
     if(signum == 12) {
-        printf("Output from SIGUSR2 handler");
+        assert(printf("Output from signal# %d, SIGUSR2\n", signum) != 0);
     }
 }
 
