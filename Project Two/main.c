@@ -13,17 +13,14 @@ int main() {
     int exitStatus;
     pid_t parentPID;
 
-    // Set handlers for SIGUSR1 and SIGUSR2 signals.
-    signal (SIGUSR1, SIGUSR1Handler);
-    signal (SIGUSR2, SIGUSR2Handler);
-
     struct sigaction action;
     action.sa_handler = SIGUSR1Handler;
     sigemptyset (&action.sa_mask);
-    action.sa_flags = 0;
-    //action.sa_flags = SA_RESTART;
+    //action.sa_flags = 0;
+    action.sa_flags = SA_RESTART;
 
     assert (sigaction (SIGUSR1, &action, NULL) == 0 );
+    assert (sigaction (SIGUSR2, &action, NULL) == 0 );
 
     // Create a child process, capture child PID# upon success. 
     pid_t childPID = fork();
@@ -34,8 +31,6 @@ int main() {
     }
 
     else if( childPID == 0 ) {
-
-        parentPID = getppid();
         //Execute child.c, capture program return status. 
         exitStatus = execl("./child", "child", NULL);
         perror("Function execl() failed\n");
@@ -43,23 +38,16 @@ int main() {
     }
 
     else {
-
         assert(waitpid(childPID, &exitStatus, 0) != -1);
     }
     
     return 0;
 } 
 
-void SIGUSR1Handler(int signal) {
-    
-    //sigaction();
-    printf("test output from SIGUSR1Hanlder\n");
-    //then wait for the child
-    //waitpid();
-    //and then when signals arrive, the signal handler begins doing its thing.   
+void SIGUSR1Handler(int signum) {
+    printf("test output from SIGUSR1Hanlder\n");  
 }
 
-void SIGUSR2Handler(int signal) {
-
+void SIGUSR2Handler(int signum) {
     printf("test output from SIGUSR2Handler\n");
 }

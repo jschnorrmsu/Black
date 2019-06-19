@@ -12,11 +12,10 @@
 // and execl() to child.)
 
 int main() {
-    int returnValue;
-    int parentPID = getppid();
-        kill(parentPID, SIGUSR1);
-        kill(parentPID, SIGUSR2);
-        printf("test output from child.c\n");
 
+    int parentPID = getppid();
+    kill(parentPID, SIGUSR1);
+    kill(parentPID, SIGUSR2);
+    //printf("test output from child.c\n");
     exit(0);
 }
