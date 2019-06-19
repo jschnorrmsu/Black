@@ -13,9 +13,9 @@
 
 int main() {
 
-    int parentPID = getppid();
-    kill(parentPID, SIGUSR1);
-    kill(parentPID, SIGUSR2);
-    //printf("test output from child.c\n");
-    exit(0);
+    pid_t parentPID = getppid();
+    assert (kill(parentPID, SIGUSR1) != -1);
+    assert (kill(parentPID, SIGUSR2) != -1);
+    printf("test output from child.c\n");
+    return(0);
 }

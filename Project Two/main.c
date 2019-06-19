@@ -1,28 +1,26 @@
+#define _POSIX_C_SOURCE 200809l
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <syscall.h>
 
-void SIGUSR1Handler();
-void SIGUSR2Handler();
+void handler();
 
 int main() {
 
     int exitStatus;
-    pid_t parentPID;
 
     struct sigaction action;
-    action.sa_handler = SIGUSR1Handler;
+    action.sa_handler = handler;
     sigemptyset (&action.sa_mask);
-    //action.sa_flags = 0;
     action.sa_flags = SA_RESTART;
 
     assert (sigaction (SIGUSR1, &action, NULL) == 0 );
     assert (sigaction (SIGUSR2, &action, NULL) == 0 );
 
-    // Create a child process, capture child PID# upon success. 
     pid_t childPID = fork();
 
     if( childPID < 0) {
@@ -30,8 +28,7 @@ int main() {
         exit(-1);
     }
 
-    else if( childPID == 0 ) {
-        //Execute child.c, capture program return status. 
+    else if( childPID == 0 ) { 
         exitStatus = execl("./child", "child", NULL);
         perror("Function execl() failed\n");
         exit(exitStatus);
@@ -44,10 +41,17 @@ int main() {
     return 0;
 } 
 
-void SIGUSR1Handler(int signum) {
-    printf("test output from SIGUSR1Hanlder\n");  
+void handler(int signum) {
+    printf("test output on top of handler");  
+
+    if(signum == 10) {
+        printf("Output from SIGUSR1 handler");
+    }
+
+    if(signum == 12) {
+        printf("Output from SIGUSR2 handler");
+    }
 }
 
-void SIGUSR2Handler(int signum) {
-    printf("test output from SIGUSR2Handler\n");
-}
+
+
