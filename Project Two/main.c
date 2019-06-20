@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <syscall.h>
 
 void handler();
