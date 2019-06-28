@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200809l
+//#define _POSIX_C_SOURCE 200809l
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -7,7 +7,7 @@ int main() {
 
     pid_t childPID = getpid();
     while(1) {
-        write("Awake in %d\n", childPID);
+        printf("Awake in %d\n", childPID);
         sleep(1);
     }
 
