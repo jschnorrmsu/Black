@@ -13,44 +13,45 @@
 #include "syscall.h"
 #include "eye2eh.c"
 
+// With help from Luke Smith, John Shaprio. 
+
 void handler();
+pid_t childPID;
 
 int main() {
 
-    pid_t childPID;
-    int exitStatus;
 
     struct sigaction action;
     action.sa_handler = handler;
     assert (sigemptyset(&action.sa_mask) >= 0);
     action.sa_flags = SA_RESTART | SA_NOCLDSTOP;
 
-    childPID = fork();
-
     assert(sigaction(SIGCHLD, &action, NULL) ==0);
+
+    childPID = fork();
 
     if( childPID < 0) {
         perror("system call fork() failed\n");
         exit(-1);
     }  
 
-    else if( childPID == 1) {
-        exitStatus = execl("./child.c", "child", NULL);
-        //***********FIXME add perror************************************************************
-        //**********************************
+    else if( childPID == 0) {
+        execl("./child", "child", NULL);
+        perror("execl() failure\n");
+        exit(-1);
     }   
 
     else {
         for(int i = 0; i < 5; i ++) {
-            WRITESTRING("SIGSTOP child\n");
-            assert(kill(exitStatus, SIGSTOP) == 0);
-            sleep(2);
-            WRITESTRING("SIGSTART child\n");
-            assert(kill(exitStatus, SIGCONT) == 0);
-            sleep(2);
+            WRITESTRING("SIGSTOPPING child\n");
+            assert(kill(childPID, SIGSTOP) == 0);
+            assert(sleep(2) >= 0);
+            WRITESTRING("SIGSTARTING child\n");
+            assert(kill(childPID, SIGCONT) == 0);
+            assert(sleep(2) >= 0);
         }
-        assert(kill(exitStatus, SIGINT) == 0);
-        pause();
+        assert(kill(childPID, SIGINT) == 0);
+        assert(pause() == 0);
     }
     return(0);
 }
@@ -60,35 +61,30 @@ void handler(int signum) {
 
     // SIGINT handler.
     if(signum == 2) {
-        //handle SIGINT here.
+        // Outside scope of this project.
     }
 
     // SIGCHLD handler.
     if(signum == 17) {
-        for(int i = 0; i <= 4; i ++) {
-            int status = status;
-            assert(waitpid(-1, &status, 0) != 0);
+        int status = childPID;
+        assert(waitpid(-1, &status, 0) != 0);
 
-            if(WIFSIGNALED(status)) {
-                int exitStatus = WTERMSIG(status);
-                WRITESTRING("Child exited with status ");
-                WRITEINT(status, 2);
-                WRITESTRING("\n");
-            }
+        if(WIFSIGNALED(status)) {
+            int exitStatus = WTERMSIG(status);
+            WRITESTRING("Child exited with status ");
+            WRITEINT(status, sizeof(exitStatus));
+            WRITESTRING("\n");
         }
-
-        exit(0);
     }
-
 
     // SIGCONT handler.
     if(signum == 18) {
-
+        // Outside scope of this project.
     }
 
     // SIGSTOP handler.
     if(signum ==19) {
-
+        // Outside scope of this project.
     }
-
+    exit(0);
 }
