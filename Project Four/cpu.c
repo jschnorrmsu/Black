@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -6,7 +7,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
-#include <systemcall.h>
+#include "systemcall.h"
+#include "eye2eh.c"
 
 /*
 This program does the following.
