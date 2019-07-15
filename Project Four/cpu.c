@@ -65,12 +65,13 @@ Add the following functionality.
    c) Restart the idle process to use the rest of the time slice.
 */
 
-#define NUM_SECONDS 5
+#define NUM_SECONDS 20
 #define ever ;;
 
 enum STATE { NEW, RUNNING, WAITING, READY, TERMINATED, EMPTY };
 
 struct PCB {
+
     enum STATE state;
     const char *name;   // name of the executable
     int pid;            // process id from fork();
@@ -92,6 +93,7 @@ int sys_time;
 int timer;
 struct sigaction alarm_handler;
 struct sigaction child_handler;
+int status;
 
 void bad(int signum) {
     WRITESTRING("bad signal: ");
@@ -147,8 +149,25 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 }
 
 void scheduler (int signum) {
+
     WRITESTRING("---- entering scheduler\n");
     assert(signum == SIGALRM);
+    running->state = READY;
+    running->interrupts ++;
+    running->switches ++;
+
+    // fork() here.
+
+     processes[getpid()].pid = fork();
+     running = &processes[getpid()];
+     processes[getppid()].ppid =getppid();
+     processes[getpid()].pid = getpid();
+     processes[getpid()].started = clock();
+     processes[getpid()].state = RUNNING;
+     status = execl(processes[getpid()].name, processes[getpid()].name, NULL);
+     perror(" execly() failed\n");
+     exit(status);
+
 
     WRITESTRING ("Continuing idle: ");
     WRITEINT (idle.pid, 6);
@@ -156,7 +175,6 @@ void scheduler (int signum) {
     running = &idle;
     idle.state = RUNNING;
     systemcall (kill (idle.pid, SIGCONT));
-
     WRITESTRING("---- leaving scheduler\n");
 }
 
@@ -167,7 +185,6 @@ void process_done (int signum) {
     WRITESTRING ("Timer died, cleaning up and killing everything\n");
     systemcall(kill(0, SIGTERM));
 
-    WRITESTRING ("---- leaving process_done\n");
 }
 
 void boot()
@@ -206,12 +223,12 @@ int main(int argc, char **argv) {
     create_idle();
     running = &idle;
 
-    //******PER DR B, et process state to new since it s anew process.
-    // set name to argv +1
-    //will be using execl like in project 3.
+
     for(int i = 0; i < argc; i++) {
         processes[i].name = argv[i+1];
         processes[i].state = NEW;
+        WRITESTRING("Process ");
+        
     }
 
     for(ever) {
