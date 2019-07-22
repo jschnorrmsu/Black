@@ -6,14 +6,8 @@
 #include <errno.h>
 
 /*
-** Compile and run this program, and make sure you get the 'aargh' error
-** message. Fix it using a pthread mutex. The one command-line argument is
-** the number of times to loop. Here are some suggested initial values, but
-** you might have to tune them to your machine.
-** Debian 8: 100000000
-** Gouda: 10000000
-** OS X: 100000
-** You will need to compile your program with a "-lpthread" option.
+Compile via gcc with the following command line instruction
+gcc -g -pthread Race.c -o Race -Wall -Werror
 */
 
 #define NUM_THREADS 2
@@ -23,8 +17,8 @@ pthread_mutex_t lock;
 int i;
 
 void *foo (void *bar) {
-    pthread_mutex_lock(&lock);
     printf("in a foo thread, ID %ld\n", (long) pthread_self());
+    pthread_mutex_lock(&lock);
 
     for (i = 0; i < *((int *) bar); i++) {
         int tmp = i;
@@ -51,7 +45,7 @@ int main(int argc, char **argv)
 
     pthread_t threads[NUM_THREADS];
 
-    pthread_mutex_lock(&lock);
+    pthread_mutex_init(&lock, NULL);
 
     for (int i = 0; i < NUM_THREADS; i++) {
         if (pthread_create(&threads[i], NULL, foo, (void *) &iterations)) {
