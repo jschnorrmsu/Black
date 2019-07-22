@@ -7,11 +7,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
+#include <time.h>
 #include "systemcall.h"
 #include "eye2eh.c"
 
-/*
-This program does the following.
+/* With Help From John Shapiro.
+This program does the followin.
 1) Creates handlers for two signals.
 2) Create an idle process which will be executed when there is nothing
    else to do.
@@ -94,6 +95,10 @@ int timer;
 struct sigaction alarm_handler;
 struct sigaction child_handler;
 int status;
+int process;
+int counter;
+int process_number;
+int found_new;
 
 void bad(int signum) {
     WRITESTRING("bad signal: ");
@@ -122,8 +127,9 @@ void ISR (int signum) {
 }
 
 void send_signals(int signal, int pid, int interval, int number) {
+
     for(int i = 1; i <= number; i++) {
-        sleep(interval);
+        assert(sleep(interval) == 0);
         WRITESTRING("Sending signal: ");
         WRITEINT(signal, 4);
         WRITESTRING(" to process: ");
@@ -132,15 +138,18 @@ void send_signals(int signal, int pid, int interval, int number) {
         systemcall(kill(pid, signal));
     }
 
-    WRITESTRING("At the end of send_signals\n");
+    WRITESTRING("Done sending signals\n");
 }
 
 void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
+
     action.sa_handler = handler;
 
     if (signum == SIGCHLD) {
         action.sa_flags = SA_NOCLDSTOP | SA_RESTART;
-    } else {
+    } 
+
+    else {
         action.sa_flags =  SA_RESTART;
     }
 
@@ -152,29 +161,75 @@ void scheduler (int signum) {
 
     WRITESTRING("---- entering scheduler\n");
     assert(signum == SIGALRM);
+
+    if(running->state == TERMINATED) {
+        WRITESTRING ("Continuing idle: ");
+        WRITEINT (idle.pid, 6);
+        WRITESTRING ("\n");
+        running = &idle;
+        idle.state = RUNNING;
+        idle.started = time(NULL);
+        systemcall (kill (idle.pid, SIGCONT));
+        running->pid = idle.ppid;
+        running->name = idle.name;
+    }
+
     running->state = READY;
     running->interrupts ++;
-    running->switches ++;
+    process_number = 0;
+    found_new = 0;
 
-    // fork() here.
+    while( found_new == 0 && process_number < counter) {
+        if(processes[process_number].state == NEW) {
+            found_new = 1;
+        }
 
-     processes[getpid()].pid = fork();
-     running = &processes[getpid()];
-     processes[getppid()].ppid =getppid();
-     processes[getpid()].pid = getpid();
-     processes[getpid()].started = clock();
-     processes[getpid()].state = RUNNING;
-     status = execl(processes[getpid()].name, processes[getpid()].name, NULL);
-     perror(" execly() failed\n");
-     exit(status);
+        else {
+            process_number ++;
+        }
+    }
 
+    if(found_new) {
+        running = &processes[process_number];
+        running->state = RUNNING;
+        assert(processes[process_number].started = time(NULL));
+        running->interrupts = 0;
+        running->switches = 0;
+        assert((running->pid = fork()) != -1);
+        
+        if(running->pid <0) {
+            perror("fork()");
+            exit(-1);
+        }
 
-    WRITESTRING ("Continuing idle: ");
-    WRITEINT (idle.pid, 6);
-    WRITESTRING ("\n");
-    running = &idle;
-    idle.state = RUNNING;
-    systemcall (kill (idle.pid, SIGCONT));
+        else if(running->pid ==0) {
+            int exit_status = execl(running->name, running->name, NULL);
+            perror("execl() failed \n");
+            exit(exit_status);
+        }
+
+        if(running->pid != processes[process_number].pid) {
+            processes[process_number].switches ++;
+        }
+    }
+
+    else {
+        if(process == counter) {
+            process = 0;
+        }
+
+        if(processes[process].state == READY) {
+            if(running->pid != processes[process].pid) {
+                running->switches++;
+            }
+
+            running = &processes[process];
+            systemcall(kill(running->pid, SIGCONT));
+            process++;
+        }
+    }
+
+    sleep(1);
     WRITESTRING("---- leaving scheduler\n");
 }
 
@@ -182,9 +237,22 @@ void process_done (int signum) {
     WRITESTRING("---- entering process_done\n");
     assert (signum == SIGCHLD);
 
-    WRITESTRING ("Timer died, cleaning up and killing everything\n");
-    systemcall(kill(0, SIGTERM));
+    if(running->pid != idle.pid) {
+        running->state = TERMINATED;
+        WRITESTRING("\nProcess: ");
+        WRITEINT(running->pid, 7);
+        WRITESTRING("\nInterrupts: ");
+        WRITEINT(running->interrupts, 7);
+        WRITESTRING("\nTime: ");
+        WRITEINT(time(NULL) - running->started, 10);
+    }
 
+    else {
+        WRITESTRING ("Timer died, cleaning up and killing everything\n");
+    }
+
+    WRITESTRING("---- leaving proces_done\n");
+    systemcall(kill(idle.pid, SIGCONT));
 }
 
 void boot()
@@ -219,6 +287,7 @@ void create_idle() {
 
 int main(int argc, char **argv) {
 
+
     boot();
     create_idle();
     running = &idle;
@@ -228,7 +297,8 @@ int main(int argc, char **argv) {
         processes[i].name = argv[i+1];
         processes[i].state = NEW;
         WRITESTRING("Process ");
-        
+        WRITESTRING(processes[i-1].name);
+        WRITESTRING("\n");
     }
 
     for(ever) {

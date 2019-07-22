@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <syscall.h>
 #include <errno.h>
-#include <string.h>
+#include <time.h>
 #include "syscall.h"
 #include "eye2eh.c"
 
@@ -33,13 +33,13 @@ int main() {
     if( childPID < 0) {
         perror("system call fork() failed\n");
         exit(-1);
-    }  
+    }
 
     else if( childPID == 0) {
         execl("./child", "child", NULL);
         perror("execl() failure\n");
         exit(-1);
-    }   
+    }
 
     else {
         for(int i = 0; i < 5; i ++) {
