@@ -8,6 +8,11 @@
 /*
 Compile via gcc with the following command line instruction
 gcc -g -pthread Race.c -o Race -Wall -Werror
+
+run via
+./Race 10000000
+passing it a large number as a numerical argument. Tested vigourosly by increasing
+the number of threads to 10 and pasing it a large agrument as well.
 */
 
 #define NUM_THREADS 2
