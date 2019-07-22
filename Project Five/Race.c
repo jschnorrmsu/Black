@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
-
 #include <errno.h>
-
 
 /*
 ** Compile and run this program, and make sure you get the 'aargh' error
@@ -20,9 +18,12 @@
 
 #define NUM_THREADS 2
 
+pthread_mutex_t lock;
+
 int i;
 
 void *foo (void *bar) {
+    pthread_mutex_lock(&lock);
     printf("in a foo thread, ID %ld\n", (long) pthread_self());
 
     for (i = 0; i < *((int *) bar); i++) {
@@ -33,6 +34,7 @@ void *foo (void *bar) {
         }
     }
 
+    pthread_mutex_unlock(&lock);
     pthread_exit ((void *)pthread_self());
 }
 
@@ -48,6 +50,8 @@ int main(int argc, char **argv)
     assert(iterations > 0);
 
     pthread_t threads[NUM_THREADS];
+
+    pthread_mutex_lock(&lock);
 
     for (int i = 0; i < NUM_THREADS; i++) {
         if (pthread_create(&threads[i], NULL, foo, (void *) &iterations)) {
@@ -65,5 +69,6 @@ int main(int argc, char **argv)
         printf("joined a foo thread, number %ld\n", (long) status);
     }
 
+    pthread_mutex_destroy(&lock);
     return (0);
 }
